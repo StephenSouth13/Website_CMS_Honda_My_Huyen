@@ -60,11 +60,12 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
 // 1. Đặt HOST linh hoạt (tự lấy từ process.env hoặc fallback)
-const port = 5000;
-const host = process.env.HOST || "localhost"; // đổi từ '0.0.0.0' sang 'localhost' để tránh ENOTSUP
+const port = parseInt(process.env.PORT || "5000", 10); // Render gán PORT động qua biến môi trường
+const host = "0.0.0.0"; // bắt buộc để Render detect
 
 server.listen(port, host, () => {
   log(`✅ Server is running at http://${host}:${port}`);
 });
+
 
 })();

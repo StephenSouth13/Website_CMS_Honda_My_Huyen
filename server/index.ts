@@ -59,12 +59,12 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+// 1. Đặt HOST linh hoạt (tự lấy từ process.env hoặc fallback)
+const port = 5000;
+const host = process.env.HOST || "localhost"; // đổi từ '0.0.0.0' sang 'localhost' để tránh ENOTSUP
+
+server.listen(port, host, () => {
+  log(`✅ Server is running at http://${host}:${port}`);
+});
+
 })();

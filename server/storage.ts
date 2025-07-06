@@ -21,6 +21,8 @@ export interface IStorage {
   getMotorcycle(id: number): Promise<Motorcycle | undefined>;
   getMotorcycleBySlug(slug: string): Promise<Motorcycle | undefined>;
   createMotorcycle(motorcycle: InsertMotorcycle): Promise<Motorcycle>;
+  updateMotorcycle(id: number, motorcycle: Partial<InsertMotorcycle>): Promise<Motorcycle | undefined>;
+  deleteMotorcycle(id: number): Promise<boolean>;
   
   // Test Drive Requests
   getTestDriveRequests(): Promise<TestDriveRequest[]>;
@@ -38,6 +40,8 @@ export interface IStorage {
   getActivePromotions(): Promise<Promotion[]>;
   getPromotion(id: number): Promise<Promotion | undefined>;
   createPromotion(promotion: InsertPromotion): Promise<Promotion>;
+  updatePromotion(id: number, promotion: Partial<InsertPromotion>): Promise<Promotion | undefined>;
+  deletePromotion(id: number): Promise<boolean>;
   
   // Services
   getServices(): Promise<Service[]>;
@@ -78,6 +82,19 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
+    // Seed admin user
+    const adminUser: User = {
+      id: this.currentUserId++,
+      username: "admin",
+      email: "admin@hondamyhuyen.com",
+      password: "admin123", // In production, this should be hashed
+      fullName: "Administrator",
+      phone: "1900-1234",
+      role: "admin",
+      createdAt: new Date()
+    };
+    this.users.set(adminUser.id, adminUser);
+
     // Seed motorcycles
     const motorcycleData: InsertMotorcycle[] = [
       {
@@ -159,7 +176,24 @@ export class MemStorage implements IStorage {
     ];
 
     motorcycleData.forEach(data => {
-      const motorcycle: Motorcycle = { ...data, id: this.currentMotorcycleId++, createdAt: new Date() };
+      const motorcycle: Motorcycle = { 
+        ...data, 
+        id: this.currentMotorcycleId++, 
+        createdAt: new Date(),
+        description: data.description || null,
+        originalPrice: data.originalPrice || null,
+        engine: data.engine || null,
+        displacement: data.displacement || null,
+        fuelCapacity: data.fuelCapacity || null,
+        weight: data.weight || null,
+        features: data.features || null,
+        colors: data.colors || null,
+        imageUrl: data.imageUrl || null,
+        imageGallery: data.imageGallery || null,
+        isNew: data.isNew || null,
+        isFeatured: data.isFeatured || null,
+        inStock: data.inStock || null
+      };
       this.motorcycles.set(motorcycle.id, motorcycle);
     });
 
@@ -179,7 +213,16 @@ export class MemStorage implements IStorage {
     ];
 
     promotionData.forEach(data => {
-      const promotion: Promotion = { ...data, id: this.currentPromotionId++, createdAt: new Date() };
+      const promotion: Promotion = { 
+        ...data, 
+        id: this.currentPromotionId++, 
+        createdAt: new Date(),
+        imageUrl: data.imageUrl || null,
+        discountAmount: data.discountAmount || null,
+        discountPercentage: data.discountPercentage || null,
+        isActive: data.isActive || null,
+        conditions: data.conditions || null
+      };
       this.promotions.set(promotion.id, promotion);
     });
 
@@ -209,7 +252,13 @@ export class MemStorage implements IStorage {
     ];
 
     serviceData.forEach(data => {
-      const service: Service = { ...data, id: this.currentServiceId++, createdAt: new Date() };
+      const service: Service = { 
+        ...data, 
+        id: this.currentServiceId++, 
+        createdAt: new Date(),
+        price: data.price || null,
+        duration: data.duration || null
+      };
       this.services.set(service.id, service);
     });
   }
@@ -229,7 +278,13 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: new Date(),
+      phone: insertUser.phone || null,
+      role: (insertUser as any).role || "user"
+    };
     this.users.set(id, user);
     return user;
   }
@@ -257,9 +312,56 @@ export class MemStorage implements IStorage {
 
   async createMotorcycle(insertMotorcycle: InsertMotorcycle): Promise<Motorcycle> {
     const id = this.currentMotorcycleId++;
-    const motorcycle: Motorcycle = { ...insertMotorcycle, id, createdAt: new Date() };
+    const motorcycle: Motorcycle = { 
+      ...insertMotorcycle, 
+      id, 
+      createdAt: new Date(),
+      description: insertMotorcycle.description || null,
+      originalPrice: insertMotorcycle.originalPrice || null,
+      engine: insertMotorcycle.engine || null,
+      displacement: insertMotorcycle.displacement || null,
+      fuelCapacity: insertMotorcycle.fuelCapacity || null,
+      weight: insertMotorcycle.weight || null,
+      features: insertMotorcycle.features || null,
+      colors: insertMotorcycle.colors || null,
+      imageUrl: insertMotorcycle.imageUrl || null,
+      imageGallery: insertMotorcycle.imageGallery || null,
+      isNew: insertMotorcycle.isNew || null,
+      isFeatured: insertMotorcycle.isFeatured || null,
+      inStock: insertMotorcycle.inStock || null
+    };
     this.motorcycles.set(id, motorcycle);
     return motorcycle;
+  }
+
+  async updateMotorcycle(id: number, update: Partial<InsertMotorcycle>): Promise<Motorcycle | undefined> {
+    const existing = this.motorcycles.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Motorcycle = {
+      ...existing,
+      ...update,
+      description: update.description !== undefined ? update.description || null : existing.description,
+      originalPrice: update.originalPrice !== undefined ? update.originalPrice || null : existing.originalPrice,
+      engine: update.engine !== undefined ? update.engine || null : existing.engine,
+      displacement: update.displacement !== undefined ? update.displacement || null : existing.displacement,
+      fuelCapacity: update.fuelCapacity !== undefined ? update.fuelCapacity || null : existing.fuelCapacity,
+      weight: update.weight !== undefined ? update.weight || null : existing.weight,
+      features: update.features !== undefined ? update.features || null : existing.features,
+      colors: update.colors !== undefined ? update.colors || null : existing.colors,
+      imageUrl: update.imageUrl !== undefined ? update.imageUrl || null : existing.imageUrl,
+      imageGallery: update.imageGallery !== undefined ? update.imageGallery || null : existing.imageGallery,
+      isNew: update.isNew !== undefined ? update.isNew || null : existing.isNew,
+      isFeatured: update.isFeatured !== undefined ? update.isFeatured || null : existing.isFeatured,
+      inStock: update.inStock !== undefined ? update.inStock || null : existing.inStock
+    };
+    
+    this.motorcycles.set(id, updated);
+    return updated;
+  }
+
+  async deleteMotorcycle(id: number): Promise<boolean> {
+    return this.motorcycles.delete(id);
   }
 
   // Test Drive Request methods
@@ -273,7 +375,14 @@ export class MemStorage implements IStorage {
 
   async createTestDriveRequest(insertRequest: InsertTestDriveRequest): Promise<TestDriveRequest> {
     const id = this.currentTestDriveId++;
-    const request: TestDriveRequest = { ...insertRequest, id, status: "pending", createdAt: new Date() };
+    const request: TestDriveRequest = { 
+      ...insertRequest, 
+      id, 
+      status: "pending", 
+      createdAt: new Date(),
+      motorcycleId: insertRequest.motorcycleId || null,
+      notes: insertRequest.notes || null
+    };
     this.testDriveRequests.set(id, request);
     return request;
   }
@@ -299,7 +408,14 @@ export class MemStorage implements IStorage {
 
   async createContactRequest(insertRequest: InsertContactRequest): Promise<ContactRequest> {
     const id = this.currentContactId++;
-    const request: ContactRequest = { ...insertRequest, id, status: "new", createdAt: new Date() };
+    const request: ContactRequest = { 
+      ...insertRequest, 
+      id, 
+      status: "new", 
+      createdAt: new Date(),
+      email: insertRequest.email || null,
+      subject: insertRequest.subject || null
+    };
     this.contactRequests.set(id, request);
     return request;
   }
@@ -319,9 +435,40 @@ export class MemStorage implements IStorage {
 
   async createPromotion(insertPromotion: InsertPromotion): Promise<Promotion> {
     const id = this.currentPromotionId++;
-    const promotion: Promotion = { ...insertPromotion, id, createdAt: new Date() };
+    const promotion: Promotion = { 
+      ...insertPromotion, 
+      id, 
+      createdAt: new Date(),
+      imageUrl: insertPromotion.imageUrl || null,
+      discountAmount: insertPromotion.discountAmount || null,
+      discountPercentage: insertPromotion.discountPercentage || null,
+      isActive: insertPromotion.isActive || null,
+      conditions: insertPromotion.conditions || null
+    };
     this.promotions.set(id, promotion);
     return promotion;
+  }
+
+  async updatePromotion(id: number, update: Partial<InsertPromotion>): Promise<Promotion | undefined> {
+    const existing = this.promotions.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Promotion = {
+      ...existing,
+      ...update,
+      imageUrl: update.imageUrl !== undefined ? update.imageUrl || null : existing.imageUrl,
+      discountAmount: update.discountAmount !== undefined ? update.discountAmount || null : existing.discountAmount,
+      discountPercentage: update.discountPercentage !== undefined ? update.discountPercentage || null : existing.discountPercentage,
+      isActive: update.isActive !== undefined ? update.isActive || null : existing.isActive,
+      conditions: update.conditions !== undefined ? update.conditions || null : existing.conditions
+    };
+    
+    this.promotions.set(id, updated);
+    return updated;
+  }
+
+  async deletePromotion(id: number): Promise<boolean> {
+    return this.promotions.delete(id);
   }
 
   // Service methods
@@ -339,7 +486,13 @@ export class MemStorage implements IStorage {
 
   async createService(insertService: InsertService): Promise<Service> {
     const id = this.currentServiceId++;
-    const service: Service = { ...insertService, id, createdAt: new Date() };
+    const service: Service = { 
+      ...insertService, 
+      id, 
+      createdAt: new Date(),
+      price: insertService.price || null,
+      duration: insertService.duration || null
+    };
     this.services.set(id, service);
     return service;
   }

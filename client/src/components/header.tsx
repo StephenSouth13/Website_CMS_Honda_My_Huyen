@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Bike } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, Bike, User, LogOut, Settings } from "lucide-react";
 import { COMPANY_INFO } from "@/lib/constants";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Header() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   const navigation = [
     { href: "/", label: "Trang chủ" },
@@ -59,14 +62,43 @@ export default function Header() {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Link href="/login">
-              <span className="text-honda-gray hover:text-honda-red transition-colors cursor-pointer">
-                Đăng nhập
-              </span>
-            </Link>
-            <Link href="/register">
-              <Button className="btn-honda text-white">Đăng ký</Button>
-            </Link>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                {isAdmin && (
+                  <Link href="/admin">
+                    <Button variant="ghost" className="text-honda-gray hover:text-honda-red">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-honda-gray hover:text-honda-red">
+                      <User className="h-4 w-4 mr-2" />
+                      {user?.fullName}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={logout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <>
+                <Link href="/login">
+                  <span className="text-honda-gray hover:text-honda-red transition-colors cursor-pointer">
+                    Đăng nhập
+                  </span>
+                </Link>
+                <Link href="/register">
+                  <Button className="btn-honda text-white">Đăng ký</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -91,22 +123,55 @@ export default function Header() {
                   </Link>
                 ))}
                 <div className="flex flex-col space-y-4 pt-6 border-t">
-                  <Link href="/login">
-                    <span
-                      className="text-honda-gray cursor-pointer"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Đăng nhập
-                    </span>
-                  </Link>
-                  <Link href="/register">
-                    <Button
-                      className="btn-honda text-white w-full"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Đăng ký
-                    </Button>
-                  </Link>
+                  {isAuthenticated ? (
+                    <>
+                      {isAdmin && (
+                        <Link href="/admin">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-honda-gray"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Admin Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      <div className="text-sm text-honda-gray">
+                        Xin chào, {user?.fullName}
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          logout();
+                          setIsOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Đăng xuất
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login">
+                        <span
+                          className="text-honda-gray cursor-pointer"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Đăng nhập
+                        </span>
+                      </Link>
+                      <Link href="/register">
+                        <Button
+                          className="btn-honda text-white w-full"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Đăng ký
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>

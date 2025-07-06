@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Bike, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 const loginSchema = z.object({
@@ -20,6 +21,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const { login } = useAuth();
+  const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,16 +37,26 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/login", data);
-      const user = await response.json();
+      const response = await apiRequest("/api/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      const user = response;
       
       toast({
         title: "Đăng nhập thành công!",
         description: `Chào mừng ${user.fullName} trở lại Honda Mỹ Huyền`,
       });
       
-      // Redirect to home page or dashboard
-      window.location.href = "/";
+      // Set user in auth context
+      login(user);
+      
+      // Redirect based on user role
+      if (user.role === "admin") {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error: any) {
       let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
       
